@@ -11,11 +11,19 @@ class UserLogin {
 	private $database_name = "";
 	private $connection;
 
-	public
-	function __construct() {
+	private $xid;
+	
+	public function __construct() {
 
 		$this->connectToDatabase();
-
+		$this->checkExistingAuth();
+		
+	}
+	
+	private function checkExistingAuth() {
+		if(isset($_SESSION["nexus"]["xid"])) {
+			echo "Already logged in: " . json_encode($_SESSION["nexus"]["xid"]);
+		}
 	}
 
 	//Get the users actual IP
@@ -86,7 +94,7 @@ class UserLogin {
 						if ( !$this->isAccountLocked( $username ) ) {
 
 							$this->accountVerification( $username );
-							$this->turnOnUser($username, $reflink);
+							$this->turnOnUser($username, $reflink); //mmmmmmm kinky ;)
 							$this->logAction( "$username logged in!" );
 
 						} else {
@@ -112,7 +120,6 @@ class UserLogin {
 
 	}
 	
-	//TEMP REGISTER
 	public function register() {
 		
 		$fname = strip_tags(stripslashes(mysqli_real_escape_string($this->connection, $_POST["fname"])));
@@ -341,9 +348,11 @@ class UserLogin {
 	
 	private function generateSession($username, $reflink) {
 		
-		$_SESSION["nexus"]["xid"] = array();
+		//$_SESSION["nexus"]["xid"] = array();
 		$xid = md5(uniqid(mt_rand(), true));
-		$_SESSION["nexus"]["xid"][$xid] = "$username#".$this->getUserIP()."#".$_SERVER["HTTP_USER_AGENT"]."";
+		//$_SESSION["nexus"]["xid"][$xid] = "$username#".$this->getUserIP()."#".$_SERVER["HTTP_USER_AGENT"]."";
+		$_SESSION["nexus"]["xid"] = "$username#".$this->getUserIP()."#".$_SERVER["HTTP_USER_AGENT"]."";
+		//$_SESSION["nexus"]["xid"] = $xid;
 		$token = session_id();
 		if(!$query = mysqli_query($this->connection, "INSERT INTO `session_c` (`username`, `auth`, `tkn`, `expires`) VALUES('".$username."', '".$token."', '".$xid."', '". strtotime("+30 minutes", time()) ."')")) {
 			echo mysqli_error($this->connection);
